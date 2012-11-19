@@ -1,4 +1,4 @@
-/* A simple progmac game. The player can be on any point on 2x2 grid, facing any one the four direction. A player can rotate eithr to left or to right, and can take a step of one point. This simple program takes a point and one string of instructions as input. The instructions are as follows : -
+/* A simple progpac game. The player can be on any point on 2x2 grid, facing any one the four direction. A player can rotate eithr to left or to right, and can take a step of one point. This simple program takes a point and one string of instructions as input. The instructions are as follows : -
    s - go one step ahead 
    l - rotate left
    r - rotate right
@@ -9,6 +9,7 @@
 #include <functional>
 #include <vector>
 #include <numeric>
+#include <algorithm>
 
 enum Direction {Up, Down, Left, Right};
 
@@ -47,15 +48,16 @@ std::unordered_map<Direction,Direction> mapLeft = {{Up,Left},{Left,Down},{Down,R
 std::unordered_map<Direction,Direction> mapRight = {{Left,Up},{Down,Left},{Right,Down},{Up,Right}};
 
 //A simple function to print the posistion, same as show in haskell
+//Use of to_string in C++11 standard
+//Use of auto
 std::string printp(const Position& p)
 {
-  char buf[100];
-  sprintf(buf,"x-> %d y-> %d ", p.pp.x, p.pp.y);
-  auto retStr = std::string(buf) + " " + mapDirStr[p.dr] + " ";
+  auto retStr = std::string("x-> ") +  std::to_string(p.pp.x) + " y-> " + std::to_string(p.pp.y) + " " + mapDirStr[p.dr] + " ";
   return retStr;
 }
 
-Position goleft(const Position& p)
+//Using auto in function return return type or declaring return type after function 
+auto goleft(const Position& p) -> Position
 {
   Position pt = {p.pp,mapLeft[p.dr]};
   return pt;
@@ -92,13 +94,11 @@ Position gostr(const Position& p)
 std::unordered_map<char,std::function<Position(Position)> > mapCharFuncs= {{'l',goleft},{'r',goright},{'s',gostr}};
 
 //Similar to map in map in haskell, given a list of characters return the list of actions.
+//Use of back_inserter, not sure whether introduced in C++11 or earlier. 
 std::vector<std::function<Position(Position)> > getVecFuncPos(const std::string& str)
 {
   std::vector<std::function<Position(Position)> > vec;
-  for(auto p=str.begin();p!=str.end();++p)
-    {
-      vec.push_back(mapCharFuncs[*p]);
-    }
+  std::transform(str.begin(),str.end(),std::back_inserter(vec),[](char s) {return mapCharFuncs[s];});
   return vec;
 };
  
@@ -111,9 +111,9 @@ int main()
   //Get the list of actions given the list of characters
   auto vecFuncs = getVecFuncPos(initStr);
   //Same as fold in haskell, given the list of action and initial position, perform the actions on position in sequence
-  Position fin = std::accumulate(vecFuncs.begin(),vecFuncs.end(),ps,
-				 [](const Position& ps, std::function<Position(Position)> func){return func(ps);});
-
+  auto fin = std::accumulate(vecFuncs.begin(),vecFuncs.end(),ps,
+								 [](const Position& ps, std::function<Position(Position)> func){return func(ps);});
+								 
   std::cout << "Inital point "  + printp(ps) + " after the actions " + initStr + " becomes " + printp(fin) << std::endl;
   return 0;
 }
